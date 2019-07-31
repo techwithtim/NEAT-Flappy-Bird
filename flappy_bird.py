@@ -11,6 +11,8 @@ import random
 import os
 import time
 import neat
+import visualize
+import pickle
 pygame.font.init()  # init font
 
 WIN_WIDTH = 600
@@ -320,14 +322,23 @@ def draw_window(win, birds, pipes, base, score):
 
 
 def eval_genomes(genomes, config):
+    """
+    runs the simulation of the current population of
+    birds and sets their fitness based on the distance they
+    reach in the game. 
+    """
     global WIN
     win = WIN
 
+
+    # start by creating lists holding the genome itself, the
+    # neural network associated with the genome and the
+    # bird object that uses that network to play
     nets = []
     birds = []
     ge = []
     for genome_id, genome in genomes:
-        genome.fitness = 0
+        genome.fitness = 0  # start with fitness level of 0
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         nets.append(net)
         birds.append(Bird(230,350))
@@ -351,16 +362,18 @@ def eval_genomes(genomes, config):
                 break
 
         # Move Bird, base and pipes
-        for x, bird in enumerate(birds):
+        for x, bird in enumerate(birds):  # give each bird a fitness of 0.1 for each frame it stays alive
             ge[x].fitness += 0.1
             bird.move()
-            if len(pipes) > 1 and bird.x > pipes[0].x + pipes[0].PIPE_TOP.get_width():
-                ind = 1
+            if len(pipes) > 1 and bird.x > pipes[0].x + pipes[0].PIPE_TOP.get_width():  # determine whether to use the first or second
+                ind = 1                                                                 # pipe on the screen for neural network input
             else:
                 ind = 0
+
+            # send bird location, top pipe location and bottom pipe location and determine from network whether to jump or not
             output = nets[birds.index(bird)].activate((bird.y, abs(bird.y - pipes[ind].height), abs(bird.y - pipes[ind].bottom)))
 
-            if output[0] > 0.5:
+            if output[0] > 0.5:  # we use a tanh activation function so result will be between -1 and 1. if over 0.5 jump
                 bird.jump()
 
         base.move()
@@ -378,14 +391,15 @@ def eval_genomes(genomes, config):
             if pipe.x + pipe.PIPE_TOP.get_width() < 0:
                 rem.append(pipe)
 
-            if not pipe.passed and pipe.x < 230:
+            if not pipe.passed and pipe.x < bird.x:
                 pipe.passed = True
                 add_pipe = True
 
         if add_pipe:
             score += 1
-            '''for genome in ge:
-                genome.fitness += 5'''
+            # can add this line to give more reward for passing through a pipe (not required)
+            for genome in ge:
+                genome.fitness += 5
             pipes.append(Pipe(WIN_WIDTH))
 
         for r in rem:
@@ -396,16 +410,26 @@ def eval_genomes(genomes, config):
             if bird.y + bird.img.get_height() - 10 >= FLOOR or bird.y < -50:
                 remove.append((bird,nets[x],ge[x]))
 
-        for r in remove:
+        for r in remove:  # remove birds, associated genome and nets if requried
             ge.remove(r[2])
             nets.remove(r[1])
             birds.remove(r[0])
 
         draw_window(WIN, birds, pipes, base, score)
 
+        # break if score gets large enough
+        if score > 20:
+            pickle.dump(nets[0],open("best.pickle", "wb"))
+            break
+
 
 
 def run(config_file):
+    """
+    runs the NEAT algorithm to train a neural network to play flappy bird.
+    :param config_file: location of config file
+    :return: None
+    """
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          config_file)
@@ -419,8 +443,15 @@ def run(config_file):
     p.add_reporter(stats)
     #p.add_reporter(neat.Checkpointer(5))
 
-    # Run for up to 300 generations.
+    # Run for up to 50 generations.
     winner = p.run(eval_genomes, 50)
+
+    # show final stats
+    print('\nBest genome:\n{!s}'.format(winner))
+    node_names = {-1:'Bird Y', -2: 'Top Pipe Y', -3:"Bottom Pipe Y", 0:'Jump'}
+    visualize.draw_net(config, winner, True, node_names=node_names) 
+    visualize.plot_stats(stats, ylog=False, view=True)
+    visualize.plot_species(stats, view=True)
 
 
 if __name__ == '__main__':
