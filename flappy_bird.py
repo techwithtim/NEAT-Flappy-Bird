@@ -13,6 +13,7 @@ import time
 import neat
 import visualize
 import pickle
+os.environ["PATH"] += os.pathsep + 'D:/Program Files (x86)/Graphviz2.38/bin/'
 pygame.font.init()  # init font
 
 WIN_WIDTH = 600
@@ -29,6 +30,8 @@ pipe_img = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs","pipe.
 bg_img = pygame.transform.scale(pygame.image.load(os.path.join("imgs","bg.png")).convert_alpha(), (600, 900))
 bird_images = [pygame.transform.scale2x(pygame.image.load(os.path.join("imgs","bird" + str(x) + ".png"))) for x in range(1,4)]
 base_img = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs","base.png")).convert_alpha())
+
+gen = 0
 
 class Bird:
     """
@@ -296,15 +299,19 @@ def end_screen(win):
     pygame.quit()
     quit()
 
-def draw_window(win, birds, pipes, base, score):
+def draw_window(win, birds, pipes, base, score, gen, pipe_ind):
     """
     draws the windows for the main game loop
     :param win: pygame window surface
     :param bird: a Bird object
     :param pipes: List of pipes
     :param score: score of the game (int)
+    :param gen: current generation
+    :param pipe_ind: index of closest pipe
     :return: None
     """
+    if gen == 0:
+        gen = 1
     win.blit(bg_img, (0,0))
 
     for pipe in pipes:
@@ -312,11 +319,26 @@ def draw_window(win, birds, pipes, base, score):
 
     base.draw(win)
     for bird in birds:
+        # draw lines from bird to pipe
+        try:
+            pygame.draw.line(win, (255,0,0), (bird.x+bird.img.get_width()/2, bird.y + bird.img.get_height()/2), (pipes[pipe_ind].x + pipes[pipe_ind].PIPE_TOP.get_width()/2, pipes[pipe_ind].height), 5)
+            pygame.draw.line(win, (255,0,0), (bird.x+bird.img.get_width()/2, bird.y + bird.img.get_height()/2), (pipes[pipe_ind].x + pipes[pipe_ind].PIPE_BOTTOM.get_width()/2, pipes[pipe_ind].bottom), 5)
+        except:
+            pass
+        # draw bird
         bird.draw(win)
 
     # score
     score_label = STAT_FONT.render("Score: " + str(score),1,(255,255,255))
     win.blit(score_label, (WIN_WIDTH - score_label.get_width() - 15, 10))
+
+    # generations
+    score_label = STAT_FONT.render("Gens: " + str(gen-1),1,(255,255,255))
+    win.blit(score_label, (10, 10))
+
+    # alive
+    score_label = STAT_FONT.render("Alive: " + str(len(birds)),1,(255,255,255))
+    win.blit(score_label, (10, 50))
 
     pygame.display.update()
 
@@ -325,11 +347,11 @@ def eval_genomes(genomes, config):
     """
     runs the simulation of the current population of
     birds and sets their fitness based on the distance they
-    reach in the game. 
+    reach in the game.
     """
-    global WIN
+    global WIN, gen
     win = WIN
-
+    gen += 1
 
     # start by creating lists holding the genome itself, the
     # neural network associated with the genome and the
@@ -343,7 +365,7 @@ def eval_genomes(genomes, config):
         nets.append(net)
         birds.append(Bird(230,350))
         ge.append(genome)
-    
+
     base = Base(FLOOR)
     pipes = [Pipe(700)]
     score = 0
@@ -361,17 +383,17 @@ def eval_genomes(genomes, config):
                 quit()
                 break
 
-        # Move Bird, base and pipes
+        pipe_ind = 0
+        if len(birds) > 0:
+            if len(pipes) > 1 and birds[0].x > pipes[0].x + pipes[0].PIPE_TOP.get_width():  # determine whether to use the first or second
+                pipe_ind = 1                                                                 # pipe on the screen for neural network input
+
         for x, bird in enumerate(birds):  # give each bird a fitness of 0.1 for each frame it stays alive
             ge[x].fitness += 0.1
             bird.move()
-            if len(pipes) > 1 and bird.x > pipes[0].x + pipes[0].PIPE_TOP.get_width():  # determine whether to use the first or second
-                ind = 1                                                                 # pipe on the screen for neural network input
-            else:
-                ind = 0
 
             # send bird location, top pipe location and bottom pipe location and determine from network whether to jump or not
-            output = nets[birds.index(bird)].activate((bird.y, abs(bird.y - pipes[ind].height), abs(bird.y - pipes[ind].bottom)))
+            output = nets[birds.index(bird)].activate((bird.y, abs(bird.y - pipes[pipe_ind].height), abs(bird.y - pipes[pipe_ind].bottom)))
 
             if output[0] > 0.5:  # we use a tanh activation function so result will be between -1 and 1. if over 0.5 jump
                 bird.jump()
@@ -398,8 +420,8 @@ def eval_genomes(genomes, config):
         if add_pipe:
             score += 1
             # can add this line to give more reward for passing through a pipe (not required)
-            for genome in ge:
-                genome.fitness += 5
+            '''for genome in ge:
+                genome.fitness += 5'''
             pipes.append(Pipe(WIN_WIDTH))
 
         for r in rem:
@@ -415,12 +437,12 @@ def eval_genomes(genomes, config):
             nets.remove(r[1])
             birds.remove(r[0])
 
-        draw_window(WIN, birds, pipes, base, score)
+        draw_window(WIN, birds, pipes, base, score, gen, pipe_ind)
 
         # break if score gets large enough
-        if score > 20:
+        '''if score > 20:
             pickle.dump(nets[0],open("best.pickle", "wb"))
-            break
+            break'''
 
 
 
