@@ -1,0 +1,10 @@
+image:
+    file: .gitpod.dockerfile
+ports:
+  - port: 5900
+    onOpen: ignore
+  - port: 6080
+    onOpen: open-preview
+tasks:
+    - init: /usr/bin/python3 flappy_bird.py
+      command: /usr/bin/python3 flappy_bird.py
