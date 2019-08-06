@@ -269,35 +269,6 @@ def blitRotateCenter(surf, image, topleft, angle):
 
     surf.blit(rotated_image, new_rect.topleft)
 
-def menu_screen(win):
-    """
-    the menu screen that will start the game
-    :param win: the pygame window surface
-    :return: None
-    """
-    pass
-
-def end_screen(win):
-    """
-    display an end screen when the player loses
-    :param win: the pygame window surface
-    :return: None
-    """
-    run = True
-    text_label = END_FONT.render("Press Space to Restart", 1, (255,255,255))
-    while run:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-
-            if event.type == pygame.KEYDOWN:
-                main(win)
-
-        win.blit(text_label, (WIN_WIDTH/2 - text_label.get_width()/2, 500))
-        pygame.display.update()
-
-    pygame.quit()
-    quit()
 
 def draw_window(win, birds, pipes, base, score, gen, pipe_ind):
     """
@@ -471,7 +442,7 @@ def run(config_file):
     # show final stats
     print('\nBest genome:\n{!s}'.format(winner))
     node_names = {-1:'Bird Y', -2: 'Top Pipe Y', -3:"Bottom Pipe Y", 0:'Jump'}
-    visualize.draw_net(config, winner, True, node_names=node_names) 
+    visualize.draw_net(config, winner, True, node_names=node_names)
     visualize.plot_stats(stats, ylog=False, view=True)
     visualize.plot_species(stats, view=True)
 
