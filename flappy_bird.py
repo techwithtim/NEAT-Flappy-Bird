@@ -13,7 +13,6 @@ import time
 import neat
 import visualize
 import pickle
-os.environ["PATH"] += os.pathsep + 'D:/Program Files (x86)/Graphviz2.38/bin/'
 pygame.font.init()  # init font
 
 WIN_WIDTH = 600
@@ -22,6 +21,7 @@ PIPE_VEL = 3
 FLOOR = 730
 STAT_FONT = pygame.font.SysFont("comicsans", 50)
 END_FONT = pygame.font.SysFont("comicsans", 70)
+DRAW_LINES = False
 
 WIN = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 pygame.display.set_caption("Flappy Bird")
@@ -37,8 +37,6 @@ class Bird:
     """
     Bird class representing the flappy bird
     """
-    WIN_HEIGHT = 0
-    WIN_WIDTH = 0
     MAX_ROTATION = 25
     IMGS = bird_images
     ROT_VEL = 20
@@ -138,8 +136,6 @@ class Pipe():
     """
     represents a pipe object
     """
-    WIN_HEIGHT = WIN_HEIGHT
-    WIN_WIDTH = WIN_WIDTH
     GAP = 200
     VEL = 5
 
@@ -218,7 +214,6 @@ class Base:
     Represnts the moving floor of the game
     """
     VEL = 5
-    WIN_WIDTH = WIN_WIDTH
     WIDTH = base_img.get_width()
     IMG = base_img
 
@@ -269,7 +264,6 @@ def blitRotateCenter(surf, image, topleft, angle):
 
     surf.blit(rotated_image, new_rect.topleft)
 
-
 def draw_window(win, birds, pipes, base, score, gen, pipe_ind):
     """
     draws the windows for the main game loop
@@ -291,11 +285,12 @@ def draw_window(win, birds, pipes, base, score, gen, pipe_ind):
     base.draw(win)
     for bird in birds:
         # draw lines from bird to pipe
-        try:
-            pygame.draw.line(win, (255,0,0), (bird.x+bird.img.get_width()/2, bird.y + bird.img.get_height()/2), (pipes[pipe_ind].x + pipes[pipe_ind].PIPE_TOP.get_width()/2, pipes[pipe_ind].height), 5)
-            pygame.draw.line(win, (255,0,0), (bird.x+bird.img.get_width()/2, bird.y + bird.img.get_height()/2), (pipes[pipe_ind].x + pipes[pipe_ind].PIPE_BOTTOM.get_width()/2, pipes[pipe_ind].bottom), 5)
-        except:
-            pass
+        if DRAW_LINES:
+            try:
+                pygame.draw.line(win, (255,0,0), (bird.x+bird.img.get_width()/2, bird.y + bird.img.get_height()/2), (pipes[pipe_ind].x + pipes[pipe_ind].PIPE_TOP.get_width()/2, pipes[pipe_ind].height), 5)
+                pygame.draw.line(win, (255,0,0), (bird.x+bird.img.get_width()/2, bird.y + bird.img.get_height()/2), (pipes[pipe_ind].x + pipes[pipe_ind].PIPE_BOTTOM.get_width()/2, pipes[pipe_ind].bottom), 5)
+            except:
+                pass
         # draw bird
         bird.draw(win)
 
@@ -391,8 +386,8 @@ def eval_genomes(genomes, config):
         if add_pipe:
             score += 1
             # can add this line to give more reward for passing through a pipe (not required)
-            '''for genome in ge:
-                genome.fitness += 5'''
+            for genome in ge:
+                genome.fitness += 5
             pipes.append(Pipe(WIN_WIDTH))
 
         for r in rem:
@@ -414,7 +409,6 @@ def eval_genomes(genomes, config):
         '''if score > 20:
             pickle.dump(nets[0],open("best.pickle", "wb"))
             break'''
-
 
 
 def run(config_file):
@@ -441,10 +435,6 @@ def run(config_file):
 
     # show final stats
     print('\nBest genome:\n{!s}'.format(winner))
-    node_names = {-1:'Bird Y', -2: 'Top Pipe Y', -3:"Bottom Pipe Y", 0:'Jump'}
-    visualize.draw_net(config, winner, True, node_names=node_names)
-    visualize.plot_stats(stats, ylog=False, view=True)
-    visualize.plot_species(stats, view=True)
 
 
 if __name__ == '__main__':
