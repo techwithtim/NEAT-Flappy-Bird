@@ -51,7 +51,6 @@ class Bird:
         """
         self.x = x
         self.y = y
-        self.gravity = 9.8
         self.tilt = 0  # degrees to tilt
         self.tick_count = 0
         self.vel = 0
@@ -148,7 +147,6 @@ class Pipe():
         """
         self.x = x
         self.height = 0
-        self.gap = 100  # gap between top and bottom pipe
 
         # where the top and bottom of the pipe is
         self.top = 0
