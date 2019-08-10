@@ -371,7 +371,9 @@ def eval_genomes(genomes, config):
             for x, bird in enumerate(birds):
                 if pipe.collide(bird, win):
                     ge[x].fitness -= 1
-                    birds.remove(bird)
+                    birds.pop(x)
+                    nets.pop(x)
+                    ge.pop(x)
 
             if pipe.x + pipe.PIPE_TOP.get_width() < 0:
                 rem.append(pipe)
@@ -390,15 +392,11 @@ def eval_genomes(genomes, config):
         for r in rem:
             pipes.remove(r)
 
-        remove = []
         for x, bird in enumerate(birds):
             if bird.y + bird.img.get_height() - 10 >= FLOOR or bird.y < -50:
-                remove.append((bird,nets[x],ge[x]))
-
-        for r in remove:  # remove birds, associated genome and nets if requried
-            ge.remove(r[2])
-            nets.remove(r[1])
-            birds.remove(r[0])
+                birds.pop(x)
+                nets.pop(x)
+                ge.pop(x)
 
         draw_window(WIN, birds, pipes, base, score, gen, pipe_ind)
 
