@@ -1,5 +1,3 @@
-#--- parameters for the XOR-2 experiment ---#
-
 [NEAT]
 fitness_criterion     = max
 fitness_threshold     = 100
