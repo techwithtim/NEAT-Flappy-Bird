@@ -15,8 +15,8 @@ import visualize
 import pickle
 pygame.font.init()  # init font
 
-WIN_WIDTH = 600
-WIN_HEIGHT = 800
+WIN_WIDTH = 1200
+WIN_HEIGHT = 1200
 FLOOR = 730
 STAT_FONT = pygame.font.SysFont("comicsans", 50)
 END_FONT = pygame.font.SysFont("comicsans", 70)
