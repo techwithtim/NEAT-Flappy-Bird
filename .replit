@@ -1,0 +1,2 @@
+language = "python3"
+run = "pip3 install -r requirements.txt && python3 flappy_bird.py"
