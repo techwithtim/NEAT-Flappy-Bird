@@ -1,4 +1,4 @@
-image: gitpod/workspace-full-vnc
+image: .gitpod.Dockerfile
 ports:
   - port: 5900
     onOpen: ignore
