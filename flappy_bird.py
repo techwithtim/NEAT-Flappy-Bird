@@ -208,7 +208,7 @@ class Pipe():
 
 class Base:
     """
-    Represnts the moving floor of the game
+    Represents the moving floor of the game
     """
     VEL = 5
     WIDTH = base_img.get_width()
